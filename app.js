@@ -10,11 +10,15 @@ import projectRoutes from "./routes/projectRoutes.js";
 import bcrypt from "bcrypt";
 import session from "express-session";
 import rateLimit from "express-rate-limit";
+import compression from "compression";
+import helmet from "helmet";
 
 import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
+
+app.use(compression());
 
 const corsOptions = {
   origin: "http://localhost:3000",
@@ -23,10 +27,16 @@ app.use(cors(corsOptions));
 
 app.use(express.json());
 
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  })
+);
+
 // Limit requests to 100 per hour per IP address
 const limiter = rateLimit({
-  windowMs: 60 * 60 * 1000 * 24, // 1 day
-  max: 400,
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 100,
   message: "Too many requests from this IP, please try again tomorrow.",
 });
 
