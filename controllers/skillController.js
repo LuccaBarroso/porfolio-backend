@@ -82,6 +82,9 @@ export function remove(req, res) {
 }
 
 export function addStack(req, res) {
+  if (!req.body.id_stack) {
+    res.status(400).send({ message: "id_stack is requires in the body!" });
+  }
   Skill.addStack(req.params.id, req.body.id_stack, (err, data) => {
     if (err) {
       if (err.kind === "not_found") {

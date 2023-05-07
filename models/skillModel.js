@@ -23,19 +23,28 @@ Skill.getAll = (result) => {
 };
 
 Skill.getById = (skillId, result) => {
-  db.query(`SELECT * FROM skill WHERE id_skill = ?`, [skillId], (err, res) => {
-    if (err) {
-      result(null, err);
-      return;
-    }
+  db.query(
+    `SELECT s.*, GROUP_CONCAT(st.name) as stack_names, GROUP_CONCAT(st.name_pt) as stack_names_pt, GROUP_CONCAT(st.image) as stack_images, GROUP_CONCAT(st.id_stack) as stack_ids  
+       FROM skill s 
+       LEFT JOIN stack_skill ss ON s.id_skill = ss.id_skill 
+       LEFT JOIN stack st ON ss.id_stack = st.id_stack 
+       WHERE s.id_skill = ?
+       GROUP BY s.id_skill`,
+    [skillId],
+    (err, res) => {
+      if (err) {
+        result(null, err);
+        return;
+      }
 
-    if (res.length == 0) {
-      result({ kind: "not_found" }, null);
-      return;
-    }
+      if (res.length == 0) {
+        result({ kind: "not_found" }, null);
+        return;
+      }
 
-    result(null, res[0]);
-  });
+      result(null, res[0]);
+    }
+  );
 };
 
 Skill.create = (newSkill, result) => {
@@ -70,6 +79,18 @@ Skill.updateById = (skillId, skill, result) => {
 };
 
 Skill.remove = (skillId, result) => {
+  // remove all stack_skill entries with this skill
+  db.query(
+    `DELETE FROM stack_skill WHERE id_skill = ?`,
+    skillId,
+    (err, res) => {
+      if (err) {
+        result(null, err);
+        return;
+      }
+    }
+  );
+
   db.query(`DELETE FROM skill WHERE id_skill = ?`, skillId, (err, res) => {
     if (err) {
       result(null, err);

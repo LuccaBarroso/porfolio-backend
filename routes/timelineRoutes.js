@@ -1,13 +1,14 @@
 import express from "express";
 
 import * as timelineController from "../controllers/timelineController.js";
+import { requireLogin } from "./requireLoginMiddleware.js";
 
 const router = express.Router();
 
 router.get("/", timelineController.getAll);
 router.get("/:id", timelineController.getById);
-router.post("/", timelineController.create);
-router.put("/:id", timelineController.update);
-router.delete("/:id", timelineController.remove);
+router.post("/", requireLogin, timelineController.create);
+router.put("/:id", requireLogin, timelineController.update);
+router.delete("/:id", requireLogin, timelineController.remove);
 
 export default router;
