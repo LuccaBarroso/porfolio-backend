@@ -7,11 +7,13 @@ import timelineRoutes from "./routes/timelineRoutes.js";
 import stackRoutes from "./routes/stackRoutes.js";
 import skillRoutes from "./routes/skillRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 import bcrypt from "bcrypt";
 import session from "express-session";
 import rateLimit from "express-rate-limit";
 import compression from "compression";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -50,6 +52,8 @@ app.use(
   })
 );
 
+app.use(cookieParser());
+
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
@@ -63,6 +67,7 @@ app.use("/api/timelines", timelineRoutes);
 app.use("/api/stacks", stackRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/auth", authRoutes);
 
 app.post("/api/login", (req, res) => {
   // Insert Login Code Here
@@ -94,5 +99,5 @@ app.get("/api/logout", (req, res) => {
 });
 
 app.listen(process.env.PORT, () => {
-  console.log("Server running on port 3000");
+  console.log("Server running on port " + process.env.PORT);
 });
