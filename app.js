@@ -23,8 +23,10 @@ const app = express();
 app.use(compression());
 
 const corsOptions = {
-  origin: "http://localhost:3000",
+  credentials: true,
+  origin: "http://localhost:3001",
 };
+
 app.use(cors(corsOptions));
 
 app.use(express.json());
@@ -38,7 +40,7 @@ app.use(
 // Limit requests to 100 per hour per IP address
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 100,
+  max: 200,
   message: "Too many requests from this IP, please try again tomorrow.",
 });
 
@@ -69,34 +71,6 @@ app.use("/api/skills", skillRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/auth", authRoutes);
 
-app.post("/api/login", (req, res) => {
-  // Insert Login Code Here
-  let username = req.body.username;
-  let password = req.body.password;
-
-  if (username !== process.env.ADMIN_USERNAME) {
-    res.send("Incorrect credentials.");
-    return;
-  }
-
-  bcrypt.compare(password, process.env.ADMIN_PASSWORD, function (err, result) {
-    if (result) {
-      req.session.loggedIn = true;
-      res.send("Logged in!");
-    } else {
-      res.send("Incorrect creadentials.");
-    }
-  });
-});
-
-app.get("/api/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.log(err);
-    }
-    res.send("Logged out!");
-  });
-});
 
 app.listen(process.env.PORT, () => {
   console.log("Server running on port " + process.env.PORT);

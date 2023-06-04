@@ -13,40 +13,54 @@ export function login(req, res) {
       user.role = "admin";
       user.id = 1;
       if(password !== process.env.ADMIN_PASSWORD) {
-          res.status(401).send("Invalid credentials");
+          res.status(401).send({
+                message: "Invalid credentials",
+            });
       } else {
           generateTokens(user, (err, tokens) => {
               if (err) {
                   console.log(err);
-                  return res.status(500).send("Error generating tokens.");
+                  return res.status(500).send({
+                        message: "Error generating tokens.",
+                  });
               }
               res.cookie("accessToken", tokens.accessToken, { httpOnly: true });
               res.cookie("refreshToken", tokens.refreshToken, { httpOnly: true });
-              res.status(200).send("Logged in!");
+              res.status(200).send({
+                    message: "Logged in!",
+              });
           });
       }
   }
 
   // LOGIC FOR REGULAR USERS WILL GO HERE, IF ONE DAY I DECIDE IT'S WORTH IT
-  return res.status(401).send("Invalid credentials");
+  return res.status(401).send({
+        message: "Invalid credentials",
+  });
 }
 
 export function logout(req, res) {
   res.clearCookie("accessToken");
   res.clearCookie("refreshToken");
-  res.status(200).send("Logged out!");
+  res.status(200).send({
+        message: "Logged out!",
+  })
 }
 
 export function refreshLogin(req, res) {
   const refreshToken = req.cookies.refreshToken;
   if (!refreshToken) {
-      return res.status(401).send("No refresh token provided.");
+      return res.status(401).send({
+            message: "No refresh token provided.",
+      })
   }
 
   jwt.verify(refreshToken, process.env.REFRESH_TOKEN_PRIVATE_KEY, (err, user) => {
       if (err) {
           console.log(err);
-          return res.status(403).send("Invalid refresh token.");
+          return res.status(403).send({
+                message: "Invalid refresh token.",
+          });
       }
       
       generateTokens(user, (err, tokens) => {
@@ -55,7 +69,10 @@ export function refreshLogin(req, res) {
               return res.status(500).send("Error generating tokens.");
           }
           res.cookie("accessToken", tokens.accessToken, { httpOnly: true });
-          res.status(200).send("Refreshed access token!");
+          res.cookie("refreshToken", tokens.refreshToken, { httpOnly: true });
+          res.status(200).send({
+                message: "Refreshed access token.",
+          });
       });
   });
 }
@@ -65,7 +82,9 @@ export function getCurrentUser(req, res) {
   jwt.verify(token, process.env.ACCESS_TOKEN_PRIVATE_KEY, (err, user) => {
       if (err) {
           console.log(err);
-          return res.status(403).send("Invalid access token.");
+          return res.status(403).send({
+                message: "Invalid access token.",
+          });
       }
       const filteredUser = {
           id: user.id,
@@ -79,7 +98,7 @@ export function getCurrentUser(req, res) {
 
 
 
-const generateTokens = (user, callback) => {
+export function generateTokens (user, callback)  {
   try {
       const payload = { id: user.id, username: user.username, role: user.role };
       const accessToken = jwt.sign(
