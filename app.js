@@ -40,7 +40,7 @@ app.use(
 // Limit requests to 100 per hour per IP address
 const limiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 200,
+  max: 600,
   message: "Too many requests from this IP, please try again tomorrow.",
 });
 

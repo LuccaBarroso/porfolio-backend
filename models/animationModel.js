@@ -211,20 +211,41 @@ Animation.updateById = (id, animation, callback) => {
 };
 
 Animation.remove = (id, callback) => {
-  db.query("DELETE FROM animation WHERE id_animation = ?", [id], (err, res) => {
+  Animation.deleteRelatedCategories(id, (err, res) => {
     if (err) {
       callback(null, err);
       return;
     }
+    db.query("DELETE FROM animation WHERE id_animation = ?", [id], (err, res) => {
+      if (err) {
+        callback(null, err);
+        return;
+      }
 
-    if (res.affectedRows == 0) {
-      callback({ kind: "not_found" }, null);
-      return;
-    }
-
-    callback(null, res);
+      if (res.affectedRows == 0) {
+        callback({ kind: "not_found" }, null);
+        return;
+      }
+      callback(null, res);
+    });
   });
 };
+
+Animation.deleteRelatedCategories = (id, callback) => {
+  // delete all animation_animation_category
+  db.query(
+    "DELETE FROM animation_animation_category WHERE id_animation = ?",
+    [id],
+    (err, res) => {
+      if (err) {
+        callback(null, err);
+        return;
+      }
+      callback(null, res);
+    }
+  );
+};
+
 
 Animation.addGoodReview = (id, callback) => {
   db.query(

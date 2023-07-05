@@ -15,6 +15,7 @@ export function getById(req, res) {
   Project.getById(req.params.id, (err, data) => {
     if (err) {
       if (err.kind === "not_found") {
+        if(!req.params.id) res.status(400).send({ message: "id is required in the params!" });
         res.status(404).send({
           message: `Not found project with id ${req.params.id}.`,
         });

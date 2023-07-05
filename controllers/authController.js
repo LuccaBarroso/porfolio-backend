@@ -1,43 +1,44 @@
 import jwt from "jsonwebtoken";
 
 export function login(req, res) {
-  const { username, password } = req.body;
-  
-  const user = {
+    const { username, password } = req.body;
+    const user = {
       id: 0,
       username: username,
       role: "default",
-  }
-
-  if(username === process.env.ADMIN_USERNAME) {
+    }
+  
+    if (username === process.env.ADMIN_USERNAME) {
       user.role = "admin";
       user.id = 1;
-      if(password !== process.env.ADMIN_PASSWORD) {
-          res.status(401).send({
-                message: "Invalid credentials",
-            });
+      if (password !== process.env.ADMIN_PASSWORD) {
+        return res.status(401).send({
+          message: "Invalid credentials",
+        });
       } else {
-          generateTokens(user, (err, tokens) => {
-              if (err) {
-                  console.log(err);
-                  return res.status(500).send({
-                        message: "Error generating tokens.",
-                  });
-              }
-              res.cookie("accessToken", tokens.accessToken, { httpOnly: true });
-              res.cookie("refreshToken", tokens.refreshToken, { httpOnly: true });
-              res.status(200).send({
-                    message: "Logged in!",
-              });
+        console.log("Logged in as admin");
+        generateTokens(user, (err, tokens) => {
+          if (err) {
+            return res.status(500).send({
+              message: "Error generating tokens.",
+            });
+          }
+          console.log("tokens");
+          return res.cookie("accessToken", tokens.accessToken, { httpOnly: true }).cookie("refreshToken", tokens.refreshToken, { httpOnly: true }).status(200).send({
+            message: "Logged in!",
           });
+        });
       }
+    }
+  
+    // LOGIC FOR REGULAR USERS WILL GO HERE, IF ONE DAY I DECIDE IT'S WORTH IT
+  
+    // If regular user logic is added in the future, place it here
+  
+    res.status(401).send({
+      message: "Invalid credentials",
+    });
   }
-
-  // LOGIC FOR REGULAR USERS WILL GO HERE, IF ONE DAY I DECIDE IT'S WORTH IT
-  return res.status(401).send({
-        message: "Invalid credentials",
-  });
-}
 
 export function logout(req, res) {
   res.clearCookie("accessToken");
@@ -79,19 +80,40 @@ export function refreshLogin(req, res) {
 
 export function getCurrentUser(req, res) {
   const token = req.cookies.accessToken;
+  const refreshToken = req.cookies.refreshToken;
   jwt.verify(token, process.env.ACCESS_TOKEN_PRIVATE_KEY, (err, user) => {
       if (err) {
-          console.log(err);
-          return res.status(403).send({
-                message: "Invalid access token.",
-          });
+        jwt.verify(refreshToken, process.env.REFRESH_TOKEN_PRIVATE_KEY, (err, user) => {
+            if (err) {
+                console.log(err);
+                return res.status(403).send({
+                        message: "Both access and refresh tokens are invalid.",
+                });
+            }
+            
+            generateTokens(user, (err, tokens) => {
+                if (err) {
+                    console.log(err);
+                    return res.status(500).send("Error generating tokens.");
+                }
+                res.cookie("accessToken", tokens.accessToken, { httpOnly: true });
+                res.cookie("refreshToken", tokens.refreshToken, { httpOnly: true });
+                const filteredUser = {
+                    id: user.id,
+                    username: user.username,
+                    role: user.role,
+                };
+                res.status(200).json(filteredUser);
+            });
+        });
+      }else{
+          const filteredUser = {
+              id: user.id,
+              username: user.username,
+              role: user.role,
+          };
+          res.status(200).json(filteredUser);
       }
-      const filteredUser = {
-          id: user.id,
-          username: user.username,
-          role: user.role,
-      };
-      res.status(200).json(filteredUser);
   }
   );
 }

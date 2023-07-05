@@ -93,4 +93,27 @@ AnimationCategory.remove = (id, callback) => {
   );
 };
 
+AnimationCategory.isUsed = (id, callback) => {
+  db.query(
+    "SELECT * FROM animation_animation_category WHERE id_animation_category = ?",
+    [id],
+    (err, res) => {
+      if (err) {
+        callback(null, err);
+        return;
+      }
+      
+      // se tiver pelomenos 1
+      if (res.length) {
+        callback(null, true);
+        return;
+      }
+
+      callback(null, false);
+      return;
+
+    }
+  );
+};
+
 export default AnimationCategory;

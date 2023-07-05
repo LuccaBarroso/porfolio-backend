@@ -18,6 +18,7 @@ Skill.getAll = (result) => {
         return;
       }
       result(null, res);
+      return;
     }
   );
 };
@@ -41,8 +42,9 @@ Skill.getById = (skillId, result) => {
         result({ kind: "not_found" }, null);
         return;
       }
-
+      
       result(null, res[0]);
+      return;
     }
   );
 };
@@ -53,8 +55,9 @@ Skill.create = (newSkill, result) => {
       result(null, err);
       return;
     }
-
+    
     result(null, { id: res.insertId, ...newSkill });
+    return;
   });
 };
 
@@ -72,8 +75,9 @@ Skill.updateById = (skillId, skill, result) => {
         result({ kind: "not_found" }, null);
         return;
       }
-
+      
       result(null, { id: skillId, ...skill });
+      return;
     }
   );
 };
@@ -88,22 +92,22 @@ Skill.remove = (skillId, result) => {
         result(null, err);
         return;
       }
+      db.query(`DELETE FROM skill WHERE id_skill = ?`, skillId, (err, res) => {
+        if (err) {
+          result(null, err);
+          return;
+        }
+    
+        if (res.affectedRows == 0) {
+          result({ kind: "not_found" }, null);
+          return;
+        }
+    
+        result(null, res);
+      });
     }
   );
 
-  db.query(`DELETE FROM skill WHERE id_skill = ?`, skillId, (err, res) => {
-    if (err) {
-      result(null, err);
-      return;
-    }
-
-    if (res.affectedRows == 0) {
-      result({ kind: "not_found" }, null);
-      return;
-    }
-
-    result(null, res);
-  });
 };
 
 Skill.addStack = (skillId, stackId, result) => {
@@ -130,8 +134,9 @@ Skill.addStack = (skillId, stackId, result) => {
             result(null, err);
             return;
           }
-
+          
           result(null, res);
+          return;
         }
       );
     }
@@ -152,8 +157,9 @@ Skill.removeStack = (skillId, stackId, result) => {
         result({ kind: "not_found" }, null);
         return;
       }
-
+      
       result(null, res);
+      return;
     }
   );
 };

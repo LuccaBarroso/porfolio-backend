@@ -84,20 +84,40 @@ export function update(req, res) {
 }
 
 export function remove(req, res) {
-  AnimationCategory.remove(req.params.id, (err, data) => {
+  const id = req.params.id;
+  if(!id) {
+    res.status(400).send({ message: "Animation category id can not be empty!" });
+  }
+  AnimationCategory.isUsed(id, (err, data) => {
     if (err) {
-      if (err.kind === "not_found") {
-        res.status(404).send({
-          message: `Not found animation category with id ${req.params.id}.`,
+      res.status(500).send({
+        message:
+          err.message ||
+          "Some error occurred while checking if animation category is used.",
+      });
+    } else {
+      if (data == true) {
+        res.status(403).send({
+          message: `Cannot delete animation category with id ${req.params.id} because it is being used.`,
         });
       } else {
-        res.status(500).send({
-          message:
-            "Error retrieving animation category with id " + req.params.id,
+        AnimationCategory.remove(id, (err, data) => {
+          if (err) {
+            if (err.kind === "not_found") {
+              res.status(404).send({
+                message: `Not found animation category with id ${req.params.id}.`,
+              });
+            } else {
+              res.status(500).send({
+                message:
+                  "Error retrieving animation category with id " + req.params.id,
+              });
+            }
+          } else {
+            res.send({ message: `Animation category was deleted successfully!` });
+          }
         });
       }
-    } else {
-      res.send({ message: `Animation category was deleted successfully!` });
     }
   });
 }

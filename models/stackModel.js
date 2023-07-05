@@ -66,18 +66,38 @@ Stack.updateById = (stackId, stack, callback) => {
 };
 
 Stack.remove = (stackId, callback) => {
-  db.query(`DELETE FROM stack WHERE id_stack = ?`, stackId, (err, res) => {
+  db.query(`DELETE FROM stack_skill WHERE id_stack = ?`, stackId, (err, res) => {
+    
     if (err) {
-      callback(null, err);
+      callback(err, null);
       return;
     }
 
-    if (res.affectedRows == 0) {
-      callback({ kind: "not_found" }, null);
-      return;
-    }
+    // remove all project_stack
+    db.query(`DELETE FROM project_stack WHERE id_stack = ?`, stackId, (err, res) => {
 
-    callback(null, res);
+      if (err) {
+        callback(err, null);
+        return;
+      }
+      
+      db.query(`DELETE FROM stack WHERE id_stack = ?`, stackId, (err, res) => {
+        console.log("err", err);
+        console.log("res", res);
+        if (err) {
+          callback(err, null);
+          return;
+        }
+
+        if (res.affectedRows == 0) {
+          callback({ kind: "not_found" }, null);
+          return;
+        }
+
+        callback(null, res);
+        return;
+      });
+    });
   });
 };
 

@@ -11,6 +11,7 @@ export const requireLogin = (req, res, next) => {
       jwt.verify(refreshToken, process.env.REFRESH_TOKEN_PRIVATE_KEY, (err, user) => {
         if (err) {
             console.log(err);
+            console.log("Both access and refresh tokens are invalid.")
             return res.status(403).send({
                   message: "Both access and refresh tokens are invalid.",
             });
@@ -18,6 +19,7 @@ export const requireLogin = (req, res, next) => {
         
         generateTokens(user, (err, tokens) => {
             if (err) {
+              console.log("Error generating tokens for refresh on middleware.")
                 console.log(err);
                 return res.status(500).send("Error generating tokens.");
             }
@@ -26,8 +28,6 @@ export const requireLogin = (req, res, next) => {
             next();
         });
       });
-      // console.log(err);
-      // return res.status(403).send("Invalid access token.");
     }
     next();
   }
