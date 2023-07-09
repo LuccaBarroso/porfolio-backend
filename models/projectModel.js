@@ -17,14 +17,45 @@ Project.getAll = (result) => {
         FROM project p
         LEFT JOIN project_stack ps ON p.id_project = ps.id_project
         LEFT JOIN stack s ON ps.id_stack = s.id_stack
-        GROUP BY p.id_project`,
+        GROUP BY p.id_project 
+        ORDER BY p.featured DESC
+        `,
     (err, res) => {
       if (err) {
-        result(null, err);
-        return;
+        result(err, null);
+      } else {
+        let projects = [];
+        res.forEach((project) => {
+          projects.push({
+            id_project: project.id_project,
+            title: project.title,
+            title_pt: project.title_pt,
+            content: project.content,
+            content_pt: project.content_pt,
+            link_demo: project.link_demo,
+            link_code: project.link_code,
+            image: project.image,
+            featured: project.featured,
+            stacks: [],
+          });
+          if (project.stack_names) {
+            const stackNames = project.stack_names.split(",");
+            const stackNamesPt = project.stack_names_pt.split(",");
+            const stackImages = project.stack_images.split(",");
+            const stackIds = project.stack_ids.split(",");
+            stackNames.forEach((stackName, index) => {
+              projects[projects.length - 1].stacks.push({
+                id_stack: stackIds[index],
+                name: stackName,
+                name_pt: stackNamesPt[index],
+                image: stackImages[index],
+              });
+            });
+          }
+        });
+          
+        result(null, projects);
       }
-
-      result(null, res);
     }
   );
 };
@@ -40,17 +71,12 @@ Project.getById = (projectId, result) => {
     `,
     [projectId],
     (err, res) => {
-      if (err) {
-        result(null, err);
-        return;
-      }
-
-      if (res.length == 0) {
-        result({ kind: "not_found" }, null);
-        return;
-      }
-
-      result(null, res[0]);
+      if (err || res.length === 0) {
+        const error = err ? err : { kind: "not_found" };
+        result(error, null);
+      } else {
+        result(null, res[0]);
+      }      
     }
   );
 };
@@ -58,11 +84,10 @@ Project.getById = (projectId, result) => {
 Project.create = (newProject, result) => {
   db.query(`INSERT INTO project SET ?`, newProject, (err, res) => {
     if (err) {
-      result(null, err);
-      return;
+      result(err, null);
+    } else {
+      result(null, { id: res.insertId, ...newProject });
     }
-
-    result(null, { id: res.insertId, ...newProject });
   });
 };
 
@@ -81,17 +106,12 @@ Project.updateById = (projectId, project, result) => {
       projectId,
     ],
     (err, res) => {
-      if (err) {
-        result(null, err);
-        return;
-      }
-
-      if (res.affectedRows == 0) {
-        result({ kind: "not_found" }, null);
-        return;
-      }
-
-      result(null, { id: projectId, ...project });
+      if (err || res.affectedRows === 0) {
+        const error = err ? err : { kind: "not_found" };
+        result(error, null);
+      } else {
+        result(null, { id: projectId, ...project });
+      }      
     }
   );
 };
@@ -103,26 +123,21 @@ Project.remove = (projectId, result) => {
     (err, res) => {
       if (err) {
         result(null, err);
-        return;
+      }else{
+        db.query(
+          `DELETE FROM project WHERE id_project = ?`,
+          projectId,
+          (err, res) => {
+            if (err || res.affectedRows === 0) {
+              const error = err ? err : { kind: "not_found" };
+              result(error, null);
+            } else {
+              result(null, res);
+            }            
+          }
+        );
       }
 
-      db.query(
-        `DELETE FROM project WHERE id_project = ?`,
-        projectId,
-        (err, res) => {
-          if (err) {
-            result(null, err);
-            return;
-          }
-
-          if (res.affectedRows == 0) {
-            result({ kind: "not_found" }, null);
-            return;
-          }
-
-          result(null, res);
-        }
-      );
     }
   );
 };
@@ -135,33 +150,27 @@ Project.addStack = (projectId, stackId, result) => {
     [projectId, stackId],
     (err, res) => {
       if (err) {
-        result(null, err);
-        return;
-      }
-
-      if (res.length > 0) {
+        result(err, null);
+      } else if (res.length > 0) {
         result({ kind: "already_added" }, null);
-        return;
-      }
-
-      db.query(
-        `INSERT INTO project_stack (id_project, id_stack) VALUES (?, ?)`,
-        [projectId, stackId],
-        (err, res) => {
-          if (err) {
-            result(null, err);
-            return;
+      } else {
+        db.query(
+          `INSERT INTO project_stack (id_project, id_stack) VALUES (?, ?)`,
+          [projectId, stackId],
+          (err, res) => {
+            if (err) {
+              result(err, null);
+            } else {
+              const response = {
+                id_project: projectId,
+                id_stack: stackId,
+                affectedRows: res.affectedRows,
+              };
+              result(null, response);
+            }
           }
-
-          const response = {
-            id_project: projectId,
-            id_stack: stackId,
-            affectedRows: res.affectedRows,
-          };
-
-          result(null, response);
-        }
-      );
+        );
+      }      
     }
   );
 };
@@ -171,23 +180,17 @@ Project.removeStack = (projectId, stackId, result) => {
     `DELETE FROM project_stack WHERE id_project = ? AND id_stack = ?`,
     [projectId, stackId],
     (err, res) => {
-      if (err) {
-        result(null, err);
-        return;
-      }
-
-      if (res.affectedRows == 0) {
-        result({ kind: "not_found" }, null);
-        return;
-      }
-
-      const response = {
-        id_project: projectId,
-        id_stack: stackId,
-        affectedRows: res.affectedRows,
-      };
-
-      result(null, response);
+      if (err || res.affectedRows === 0) {
+        const error = err ? err : { kind: "not_found" };
+        result(error, null);
+      } else {
+        const response = {
+          id_project: projectId,
+          id_stack: stackId,
+          affectedRows: res.affectedRows,
+        };
+        result(null, response);
+      }      
     }
   );
 };

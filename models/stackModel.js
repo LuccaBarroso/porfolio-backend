@@ -10,38 +10,33 @@ const Stack = function (stack) {
 Stack.getAll = (callback) => {
   db.query(`SELECT * FROM stack`, (err, res) => {
     if (err) {
-      callback(null, err);
-      return;
-    }
-
-    callback(null, res);
+      callback(err, null);
+    } else {
+      callback(null, res);
+    }    
   });
 };
 
 Stack.getById = (stackId, callback) => {
   db.query(`SELECT * FROM stack WHERE id_stack = ?`, [stackId], (err, res) => {
     if (err) {
-      callback(null, err);
-      return;
-    }
-
-    if (res.length == 0) {
+      callback(err, null);
+    } else if (res.length === 0) {
       callback({ kind: "not_found" }, null);
-      return;
-    }
-
-    callback(null, res[0]);
+    } else {
+      callback(null, res[0]);
+    }    
   });
 };
 
 Stack.create = (newStack, callback) => {
   db.query(`INSERT INTO stack SET ?`, newStack, (err, res) => {
     if (err) {
-      callback(null, err);
-      return;
-    }
-
-    callback(null, { id: res.insertId, ...newStack });
+      callback(err, null);
+    } else {
+      const response = { id: res.insertId, ...newStack };
+      callback(null, response);
+    }    
   });
 };
 
@@ -51,16 +46,13 @@ Stack.updateById = (stackId, stack, callback) => {
     [stack.name, stack.name_pt, stack.image, stack.can_project, stackId],
     (err, res) => {
       if (err) {
-        callback(null, err);
-        return;
-      }
-
-      if (res.affectedRows == 0) {
+        callback(err, null);
+      } else if (res.affectedRows === 0) {
         callback({ kind: "not_found" }, null);
-        return;
-      }
-
-      callback(null, { id: stackId, ...stack });
+      } else {
+        const response = { id: stackId, ...stack };
+        callback(null, response);
+      }      
     }
   );
 };
@@ -70,34 +62,23 @@ Stack.remove = (stackId, callback) => {
     
     if (err) {
       callback(err, null);
-      return;
-    }
-
-    // remove all project_stack
-    db.query(`DELETE FROM project_stack WHERE id_stack = ?`, stackId, (err, res) => {
-
-      if (err) {
-        callback(err, null);
-        return;
-      }
-      
-      db.query(`DELETE FROM stack WHERE id_stack = ?`, stackId, (err, res) => {
-        console.log("err", err);
-        console.log("res", res);
+    } else {
+      db.query(`DELETE FROM project_stack WHERE id_stack = ?`, stackId, (err, res) => {
         if (err) {
           callback(err, null);
-          return;
+        } else {
+          db.query(`DELETE FROM stack WHERE id_stack = ?`, stackId, (err, res) => {
+            if (err) {
+              callback(err, null);
+            } else if (res.affectedRows === 0) {
+              callback({ kind: "not_found" }, null);
+            } else {
+              callback(null, res);
+            }
+          });
         }
-
-        if (res.affectedRows == 0) {
-          callback({ kind: "not_found" }, null);
-          return;
-        }
-
-        callback(null, res);
-        return;
       });
-    });
+    }
   });
 };
 

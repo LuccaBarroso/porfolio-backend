@@ -17,7 +17,30 @@ Skill.getAll = (result) => {
         result(null, err);
         return;
       }
-      result(null, res);
+      let treatedSkills = [];
+      res.forEach((skill) => {
+        treatedSkills.push({
+          id_skill: skill.id_skill,
+          title: skill.title,
+          title_pt: skill.title_pt,
+          stacks: [],
+        });
+        if (skill.stack_names) {
+          const stackNames = skill.stack_names.split(",");
+          const stackNamesPt = skill.stack_names_pt.split(",");
+          const stackImages = skill.stack_images.split(",");
+          const stackIds = skill.stack_ids.split(",");
+          stackNames.forEach((stackName, index) => {
+            treatedSkills[treatedSkills.length - 1].stacks.push({
+              id_stack: stackIds[index],
+              name: stackName,
+              name_pt: stackNamesPt[index],
+              image: stackImages[index],
+            });
+          });
+        }
+      });
+      result(null, treatedSkills);
       return;
     }
   );
