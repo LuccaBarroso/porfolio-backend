@@ -103,13 +103,20 @@ Animation.getAll = (
       LEFT JOIN animation_animation_category aac ON a.id_animation = aac.id_animation
       LEFT JOIN animation_category ac ON aac.id_animation_category = ac.id_animation_category`;
 
+    let whereConditions = [];
+
     if (searchQuery) {
-      countQuery += " WHERE a.title LIKE '%" + searchQuery + "%'";
+      whereConditions.push("a.title LIKE '%" + searchQuery + "%'");
     }
 
     if (category_ids.length > 0) {
-      countQuery +=
-        " WHERE ac.id_animation_category IN (" + category_ids.join(",") + ")";
+      whereConditions.push(
+        "ac.id_animation_category IN (" + category_ids.join(",") + ")"
+      );
+    }
+
+    if (whereConditions.length > 0) {
+      countQuery += " WHERE " + whereConditions.join(" AND ");
     }
 
     db.query(countQuery, (err, countResult) => {
@@ -127,6 +134,7 @@ Animation.getAll = (
     });
   });
 };
+
 
 Animation.getById = (animationId, callback) => {
   db.query(
@@ -196,16 +204,12 @@ Animation.updateById = (id, animation, callback) => {
     (err, res) => {
       if (err) {
         callback(null, err);
-        return;
-      }
-
-      if (res.affectedRows == 0) {
+      } else if (res.affectedRows == 0) {
         callback({ kind: "not_found" }, null);
-        return;
+      }else{
+        callback(null, { id: id, ...animation });
       }
 
-      callback(null, { id: id, ...animation });
-      return;
     }
   );
 };

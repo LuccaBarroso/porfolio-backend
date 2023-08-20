@@ -1,6 +1,5 @@
 import db from "./database.js";
 
-const pageLimit = 4;
 
 const Timeline = function (post) {
   this.timeline_date = post.timeline_date;
@@ -9,6 +8,8 @@ const Timeline = function (post) {
   this.content = post.content;
   this.content_pt = post.content_pt;
 };
+
+const pageLimit = 4;
 
 Timeline.getAll = (page = 1, result) => {
   let query = `SELECT COUNT(*) as total FROM timeline`;
@@ -23,9 +24,7 @@ Timeline.getAll = (page = 1, result) => {
     const totalPosts = res[0].total;
     const totalPages = Math.ceil(totalPosts / pageLimit);
 
-    query =
-      `SELECT * FROM timeline ORDER BY timeline_date DESC LIMIT ${pageLimit} OFFSET ` +
-      (page - 1) * pageLimit;
+    query = `SELECT * FROM timeline ORDER BY timeline_date ASC LIMIT ${pageLimit} OFFSET ` + (page - 1) * pageLimit;
 
     db.query(query, (err, res) => {
       if (err) {

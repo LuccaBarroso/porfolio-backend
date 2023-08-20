@@ -15,21 +15,23 @@ export const requireLogin = (req, res, next) => {
             return res.status(403).send({
                   message: "Both access and refresh tokens are invalid.",
             });
-        }
-        
-        generateTokens(user, (err, tokens) => {
-            if (err) {
-              console.log("Error generating tokens for refresh on middleware.")
+        }else{
+          generateTokens(user, (err, tokens) => {
+              if (err) {
+                console.log("Error generating tokens for refresh on middleware.")
                 console.log(err);
                 return res.status(500).send("Error generating tokens.");
-            }
-            res.cookie("accessToken", tokens.accessToken, { httpOnly: true });
-            res.cookie("refreshToken", tokens.refreshToken, { httpOnly: true });
-            next();
-        });
+              }
+              res.cookie("accessToken", tokens.accessToken, { httpOnly: true });
+              res.cookie("refreshToken", tokens.refreshToken, { httpOnly: true });
+              next();
+          });
+        }
+        
       });
+    }else{
+      next();
     }
-    next();
   }
   );
 };

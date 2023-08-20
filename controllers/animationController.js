@@ -3,7 +3,15 @@ import Animation from "../models/animationModel.js";
 export function getAll(req, res) {
   const search = req.query.search ? req.query.search : false;
   const page = req.query.page ? req.query.page : 1;
-  const category_ids = req.body.category_ids;
+  const ids = req.query.category_ids;
+  const category_ids = [];
+  if (ids) {
+    ids.split(",").forEach((id) => {
+      category_ids.push(parseInt(id));
+    });
+  }
+
+  
 
   Animation.getAll(search, page, category_ids, (err, data) => {
     if (err) {
